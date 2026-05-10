@@ -30,6 +30,7 @@ class LanChat:
         global ip_range
         ip_range = Networkrange
         Thread(target=scan_ip, daemon=True).start()
+        fill_server_list(online_servers)
 
 LanChat = LanChat()
 
@@ -42,14 +43,19 @@ def server_launch():
     conn , addr = socket.accept()
     print(f'connected to {addr}')
 
-def client_launch(ip_addr=None):
+def client_launch(ip_addr=None, mode='launch'):
     print('starting client...')
     socket = skt.socket()
     if ip_addr == None:
         return False
+    elif mode == 'close':
+        socket.close()
     elif ip_addr:
-        socket.connect((ip_addr, 8000))
-        print(f'connected to {ip_addr}')
+        try:
+            socket.connect((ip_addr, 8000))
+            print(f'connected to {ip_addr}')
+        except:
+            raise
 
 def send_message(addr , message):
     global mode
@@ -136,7 +142,7 @@ msg_text.pack(expand=True, fill='both',side='top')
 list_area = tk.Frame(root)
 list_area.pack(side='left')
 
-online_servers = tk.Listbox(list_area,height=18)
+online_servers = tk.Listbox(list_area,height=18,selectmode=tk.SINGLE)
 online_servers.pack(side='top', fill='both', expand=True)
 online_servers.bind('<<ListboxSelect>>', on_server_select)
 
@@ -144,3 +150,9 @@ create_button = tk.Button(list_area, text='Create a chat', command=lambda: Threa
 create_button.pack(side='bottom', fill='x', pady=5)
 
 root.mainloop()
+
+while True:
+    if online_servers.curselection() is not None:
+        client_launch(mode='close')
+        get_line = online_servers.get(online_servers.curselection())
+        client_launch(server_list[get_line])
